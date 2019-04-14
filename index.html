@@ -1,0 +1,98 @@
+<html lang="zh">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta charset="utf-8">
+    <script>
+
+function processFile() {
+  const lofterFile = document.getElementById("file").files[0];
+ 
+  const fileReader = new FileReader();
+  fileReader.onload = function(ev) {
+    var fileContent = ev.target.result;
+    var xmlDoc = (new DOMParser()).parseFromString(fileContent, lofterFile.type);
+
+    if (isXmlValid(xmlDoc)) {
+      processXml(xmlDoc);
+    }
+  };
+
+  fileReader.readAsText(lofterFile);
+}
+
+function getPostItemIndex(permalinkList) {
+  const postAddr = extractPostPermaLink(document.getElementById("url").value);
+  const l = permalinkList.length;
+  for (var i = 0; i < l; ++i) {       
+    var permalink = permalinkList[i].childNodes[0].nodeValue;
+    if (permalink == postAddr)
+    {
+      return i;
+    }
+  }
+   return -1;
+}
+
+function processXml(xml) {
+  var postItemIndex = getPostItemIndex(xml.getElementsByTagName("permalink"));
+
+  if (postItemIndex > -1)
+  {
+    var commentList = xml.getElementsByTagName("PostItem")[postItemIndex].getElementsByTagName("commentList");
+    if (commentList.length <= 0)
+    {
+      console.log("no comment");
+    }
+    else
+    {
+      commentList = commentList[0].getElementsByTagName("comment");
+
+      var commenterList = [];
+      var l = commentList.length;
+      for (var i = 0; i < l; ++i) {
+        var commenterId = commentList[i].getElementsByTagName("publisherUserId")[0].childNodes[0].nodeValue;
+        if (!commenterList.includes(commenterId))
+        {
+          commenterList.push(commenterId);
+        }
+      }
+      var drawNum = Math.floor(Math.random() * commenterList.length);
+      console.log(drawNum);
+      var commenter = commenterList[drawNum];
+      for (var i = 0; i < l; ++i) {
+        if (commentList[i].getElementsByTagName("publisherUserId")[0].childNodes[0].nodeValue == commenter)
+        {
+          console.log(commentList[i].getElementsByTagName("publisherNick")[0].childNodes[0].nodeValue + ": " + commentList[i].getElementsByTagName("content")[0].childNodes[0].nodeValue);
+        }
+      }
+    }
+  }
+}
+
+function isXmlValid(xml) {
+  return xml.getElementsByTagName("lofterBlogExport") != null;
+}
+
+function extractPostPermaLink(url) {
+  var permalink;
+
+  if (!url.includes("/")) {
+    permalink = url;
+  }
+  else if (url.startsWith("http") || url.startsWith("www")) {
+    permalink = url.slice(url.lastIndexOf("/")+1, url.length);
+  }
+
+  return permalink;
+}
+    </script>
+  </head>
+  <body>
+  
+      <input type="file" accept=".xml" name="xmlpath" id="file" required>
+      <input type="url" name="posturl" id="url">
+      <button onclick="processFile()">Test</button>
+  
+    <div id="result"></div>
+  </body>
+</html>
