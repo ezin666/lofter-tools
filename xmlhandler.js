@@ -1,6 +1,9 @@
 var xmlFile = null;
 var xmlDoc = null;
 
+var commenterList = null;
+var commentList = null;
+
 function processDraw() {
   const lofterFile = document.getElementById("file").files[0];
 
@@ -24,8 +27,9 @@ function processDraw() {
   fileReader.readAsText(xmlFile);
 }
 
-function getPostItemIndex(permalinkList) {
+function getPostItemIndex() {
   const postAddr = extractPostPermaLink(document.getElementById("url").value);
+  const permalinkList = xmlDoc.getElementsByTagName("permalink");
   const l = permalinkList.length;
   for (var i = 0; i < l; ++i) {       
     var permalink = permalinkList[i].childNodes[0].nodeValue;
@@ -34,50 +38,80 @@ function getPostItemIndex(permalinkList) {
       return i;
     }
   }
-   return -1;
+  return -1;
 }
 
 function processXml() {
-  var postItemIndex = getPostItemIndex(xmlDoc.getElementsByTagName("permalink"));
+  const postItemIndex = getPostItemIndex();
 
-  if (postItemIndex > -1)
+  if (postItemIndex < 0)
   {
-    var commentList = xmlDoc.getElementsByTagName("PostItem")[postItemIndex].getElementsByTagName("commentList");
-    if (commentList.length <= 0)
+    showDrawError("找不到指定文章。");
+    return;
+  }
+  
+  commentList = xmlDoc.getElementsByTagName("PostItem")[postItemIndex].getElementsByTagName("commentList");
+  if (commentList == null || commentList.length <= 0)
+  {
+    showDrawError("指定文章没有评论。");
+    return;
+  }
+
+  commentList = commentList[0].getElementsByTagName("comment");
+  commenterList = [];
+
+  var l = commentList.length;
+  for (var i = 0; i < l; ++i) {
+    var commenterId = commentList[i].getElementsByTagName("publisherUserId")[0].childNodes[0].nodeValue;
+    if (!commenterList.includes(commenterId))
     {
-      console.log("no comment");
-    }
-    else
-    {
-      commentList = commentList[0].getElementsByTagName("comment");
-
-      var commenterList = [];
-      var l = commentList.length;
-      for (var i = 0; i < l; ++i) {
-        var commenterId = commentList[i].getElementsByTagName("publisherUserId")[0].childNodes[0].nodeValue;
-        if (!commenterList.includes(commenterId))
-        {
-          commenterList.push(commenterId);
-        }
-      }
-      var drawNum = Math.floor(Math.random() * commenterList.length);
-
-      const drawResultElement = document.getElementById("drawresult");
-      showDrawNum(drawResultElement, drawNum);
-
-      var commenter = commenterList[drawNum];
-      for (var i = 0; i < l; ++i) {
-        if (commentList[i].getElementsByTagName("publisherUserId")[0].childNodes[0].nodeValue == commenter)
-        {
-          showDrawPerson(drawResultElement, 
-            commentList[i].getElementsByTagName("publisherNick")[0].childNodes[0].nodeValue,
-            commentList[i].getElementsByTagName("content")[0].childNodes[0].nodeValue
-            );
-          console.log( + ": " + commentList[i].getElementsByTagName("content")[0].childNodes[0].nodeValue);
-        }
-      }
+      commenterList.push(commenterId);
     }
   }
+  
+  drawFromComment();
+}
+
+function draw()
+{
+ // document.getElementById("drawbutton").disabled = true;
+  showDrawError("");
+
+  if (commenterList != null) {
+    if (commenterList.length > 0) {
+      drawFromComment();
+    }
+    else {
+      showDrawError("无更多可抽取评论用户。");
+    }
+  }
+  else {
+    processDraw();
+  }
+
+ // document.getElementById("drawbutton").disabled = false;
+}
+
+function drawFromComment()
+{
+  var drawIndex = Math.floor(Math.random() * commenterList.length);
+
+  const drawResultElement = document.getElementById("drawresult");
+  showDrawNum(drawResultElement, drawIndex);
+
+  var commenter = commenterList[drawIndex];
+  var l = commentList.length;
+  for (var i = 0; i < l; ++i) {
+    if (commentList[i].getElementsByTagName("publisherUserId")[0].childNodes[0].nodeValue == commenter)
+    {
+      showDrawPerson(drawResultElement, 
+        commentList[i].getElementsByTagName("publisherNick")[0].childNodes[0].nodeValue,
+        commentList[i].getElementsByTagName("content")[0].childNodes[0].nodeValue
+        );
+    }
+  }
+
+  commenterList.splice(drawIndex, 1);
 }
 
 function isXmlValid() {
@@ -104,6 +138,9 @@ function hasReadFile(file) {
 function resetFileCache() {
   xmlFile = null;
   xmlDoc = null;
+  commenterList = null;
+  commentList = null;
+  showDrawError("");
 }
 
 function showDrawNum(elm, num) {
@@ -116,4 +153,8 @@ function showDrawPerson(elm, nickname, content) {
   var commentElement = document.createElement("div");
   commentElement.innerHTML = nickname + ": " + content;
   elm.appendChild(commentElement);
+}
+
+function showDrawError(str) {
+  document.getElementById("drawerror").innerHTML = str.length == 0 ? "" : "<p>" + str + "</p>";
 }
