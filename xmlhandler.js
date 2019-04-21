@@ -10,7 +10,9 @@ function processDraw() {
 
   if (hasReadFile(lofterFile))
   {
-    processXml();
+    if (processXml()) {
+      drawFromComment();
+    }
     return;
   }
 
@@ -20,8 +22,8 @@ function processDraw() {
     var fileContent = ev.target.result;
     xmlDoc = (new DOMParser()).parseFromString(fileContent, xmlFile.type);
 
-    if (isXmlValid()) {
-      processXml();
+    if (isXmlValid() && processXml()) {
+      drawFromComment();
     }
   };
 
@@ -48,14 +50,14 @@ function processXml() {
   if (postItemIndex < 0)
   {
     showDrawError("找不到指定文章。");
-    return;
+    return false;
   }
   
   commentList = xmlDoc.getElementsByTagName("PostItem")[postItemIndex].getElementsByTagName("commentList");
   if (commentList == null || commentList.length <= 0)
   {
     showDrawError("指定文章没有评论。");
-    return;
+    return false;
   }
 
   commentList = commentList[0].getElementsByTagName("comment");
@@ -70,7 +72,7 @@ function processXml() {
     }
   }
   
-  drawFromComment();
+  return true;
 }
 
 function draw()
