@@ -7,10 +7,11 @@
     <title>简易Lofter评论抽奖计票工具</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
     <script src="xmlhandler.js" defer="true"></script>
+    <script src="pollhandler.js" defer="true"></script>
   </head>
   <body>
       <noscript><p>您的浏览器不支持Javascript!</p></noscript>
-      <fieldset><label>XML导出文件：</label><input type="file" accept=".xml" name="xmlpath" id="file" required>
+      <fieldset><label>XML导出文件：</label><input type="file" onchange="resetFileCache()" accept=".xml" name="xmlpath" id="file" required>
       </fieldset>
       <fieldset><label>Lofter文章地址：</label><input id="url" onchange="resetFileCache()" type="url" name="posturl" required>
       </fieldset>
@@ -22,13 +23,14 @@
 
       <div id="draw" class="tabcontent">
         <button id="drawbutton" onclick="draw()">抽奖</button>
-        <div id="drawerror" style="color:firebrick"></div>
+        <div id="drawerror" style="color:#990000"></div>
         <div id="drawresult"></div>
       </div>
       
       <div id="poll" class="tabcontent">
-        <button>计票</button>
-
+        <button onclick="addPollOption()">添加投票选项</button>
+        <button id="pollbutton" disabled>计票</button>
+        <div id="polloptions"></div>
         <div id="pollresult"></div>
       </div>
 

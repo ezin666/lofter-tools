@@ -29,3 +29,30 @@
   border: 1px solid #ccc;
   border-top: none;
 }
+
+.polloption {
+  display: inline;
+  padding: 5px 9px;
+}
+
+.polloption label {
+  margin: 0 8px;
+}
+
+.optionremove {
+  display: inline;
+  padding: 2px 7px;
+  color: #666;
+  background-color: #aaa;
+}
+
+.optionremove:hover {
+  color: #eee;
+  background-color: #aa0000;
+  cursor: pointer;
+}
+
+.optionremove:active {
+  color: #eee;
+  background-color: #880000;
+}
