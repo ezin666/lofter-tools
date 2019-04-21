@@ -17,20 +17,22 @@
       </fieldset>
 
       <div class="tab">
-        <button class="tablink" onclick="openTab(event,'draw')" id="defaultOpen">抽奖</button>
-        <button class="tablink" onclick="openTab(event,'poll')">计票</button>
+        <button class="tablink" onclick="openTab(event,'draw')">抽奖</button>
+        <button class="tablink" onclick="openTab(event,'poll')" id="defaultOpen">计票</button>
       </div>
 
       <div id="draw" class="tabcontent">
         <button id="drawbutton" onclick="draw()">抽奖</button>
-        <div id="drawerror" style="color:#990000"></div>
+        <div class="error"></div>
         <div id="drawresult"></div>
       </div>
       
       <div id="poll" class="tabcontent">
         <button onclick="addPollOption()">添加投票选项</button>
-        <button id="pollbutton" disabled>计票</button>
         <div id="polloptions"></div>
+        <input id="multiselect" name="ismultiselect" type="checkbox">多选投票</input>
+        <button id="pollbutton" onclick="process(pollCount)" disabled>计票</button>
+        <div class="error"></div>
         <div id="pollresult"></div>
       </div>
 

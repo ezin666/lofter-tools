@@ -5,13 +5,13 @@ var commenterList = null;
 var commentList = null;
 var drawedCommenterIndices = [];
 
-function processDraw() {
+function process(callback) {
   const lofterFile = document.getElementById("file").files[0];
 
   if (hasReadFile(lofterFile))
   {
     if (processXml()) {
-      drawFromComment();
+      callback();
     }
     return;
   }
@@ -23,7 +23,7 @@ function processDraw() {
     xmlDoc = (new DOMParser()).parseFromString(fileContent, xmlFile.type);
 
     if (isXmlValid() && processXml()) {
-      drawFromComment();
+      callback();
     }
   };
 
@@ -49,14 +49,14 @@ function processXml() {
 
   if (postItemIndex < 0)
   {
-    showDrawError("找不到指定文章。");
+    showError("找不到指定文章。");
     return false;
   }
   
   commentList = xmlDoc.getElementsByTagName("PostItem")[postItemIndex].getElementsByTagName("commentList");
   if (commentList == null || commentList.length <= 0)
   {
-    showDrawError("指定文章没有评论。");
+    showError("指定文章没有评论。");
     return false;
   }
 
@@ -77,18 +77,18 @@ function processXml() {
 
 function draw()
 {
-  showDrawError("");
+  showError("");
 
   if (commenterList != null) {
     if (commenterList.length > 0 && drawedCommenterIndices.length < commenterList.length) {
       drawFromComment();
     }
     else {
-      showDrawError("无更多可抽取评论用户。");
+      showError("无更多可抽取评论用户。");
     }
   }
   else {
-    processDraw();
+    process(drawFromComment);
   }
 }
 
@@ -143,7 +143,7 @@ function resetFileCache() {
   commentList = null;
   drawedCommenterIndices = [];
   document.getElementById("drawresult").innerHTML = "";
-  showDrawError("");
+  showError("");
 }
 
 function showDrawNum(num) {
@@ -158,6 +158,13 @@ function showDrawPerson(nickname, content) {
   document.getElementById("drawresult").appendChild(commentElement);
 }
 
-function showDrawError(str) {
-  document.getElementById("drawerror").innerHTML = str.length == 0 ? "" : "<p>" + str + "</p>";
+function showError(str) {
+  var tabcontents = document.getElementsByClassName("tabcontent");
+  var l = tabcontents.length;
+  for (i = 0; i < l; ++i) {
+    if (tabcontents[i].style.display != "none") {
+      tabcontents[i].querySelector(".error").innerHTML = str.length == 0 ? "" : "<p>" + str + "</p>";
+      break;
+    }
+  }
 }

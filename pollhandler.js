@@ -1,17 +1,20 @@
+function pollCount() {
+  console.log("test");
+}
+
 function addPollOption() {
   var polloption = document.createElement('fieldset');
   polloption.className = "polloption";
   
-  var optionIdx = document.getElementById("polloptions").childNodes.length;
   var optionInput = document.createElement('input');
   optionInput.type = "text";
   optionInput.placeholder = "关键词 (选填)";
   polloption.innerHTML = "<div class='optionremove' onclick='removeOption(this)'>x</div>" + 
-    "<label>" + (optionIdx + 1) + "</label>";
+    "<label>" + (document.getElementById("polloptions").childNodes.length + 1) + "</label>";
   polloption.appendChild(optionInput);
   document.getElementById("polloptions").appendChild(polloption);
 
-  enableDisablePollButton(true);
+  enableDisablePollButton(false);
 }
 
 function removeOption(el) {
@@ -30,7 +33,7 @@ function renumberPollOptions() {
     optionlabel.innerHTML = (i + 1);
   }
 
-  enableDisablePollButton(l > 0);
+  enableDisablePollButton(l <= 0);
 }
 
 function enableDisablePollButton(b) {

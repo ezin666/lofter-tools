@@ -56,3 +56,8 @@
   color: #eee;
   background-color: #880000;
 }
+
+.error {
+  color:#990000;
+  padding: 10px 5px;
+}
