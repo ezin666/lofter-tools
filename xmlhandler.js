@@ -3,6 +3,7 @@ var xmlDoc = null;
 
 var commenterList = null;
 var commentList = null;
+var drawedCommenterIndices = [];
 
 function processDraw() {
   const lofterFile = document.getElementById("file").files[0];
@@ -74,11 +75,10 @@ function processXml() {
 
 function draw()
 {
- // document.getElementById("drawbutton").disabled = true;
   showDrawError("");
 
   if (commenterList != null) {
-    if (commenterList.length > 0) {
+    if (commenterList.length > 0 && drawedCommenterIndices.length < commenterList.length) {
       drawFromComment();
     }
     else {
@@ -88,30 +88,29 @@ function draw()
   else {
     processDraw();
   }
-
- // document.getElementById("drawbutton").disabled = false;
 }
 
 function drawFromComment()
 {
-  var drawIndex = Math.floor(Math.random() * commenterList.length);
+  var drawIndex;
+  do {
+    drawIndex = Math.floor(Math.random() * commenterList.length);
+  } while (drawedCommenterIndices.includes(drawIndex));
 
-  const drawResultElement = document.getElementById("drawresult");
-  showDrawNum(drawResultElement, drawIndex);
+  showDrawNum(drawIndex);
 
   var commenter = commenterList[drawIndex];
   var l = commentList.length;
   for (var i = 0; i < l; ++i) {
     if (commentList[i].getElementsByTagName("publisherUserId")[0].childNodes[0].nodeValue == commenter)
     {
-      showDrawPerson(drawResultElement, 
-        commentList[i].getElementsByTagName("publisherNick")[0].childNodes[0].nodeValue,
+      showDrawPerson(commentList[i].getElementsByTagName("publisherNick")[0].childNodes[0].nodeValue,
         commentList[i].getElementsByTagName("content")[0].childNodes[0].nodeValue
         );
     }
   }
 
-  commenterList.splice(drawIndex, 1);
+  drawedCommenterIndices.push(drawIndex);
 }
 
 function isXmlValid() {
@@ -140,19 +139,21 @@ function resetFileCache() {
   xmlDoc = null;
   commenterList = null;
   commentList = null;
+  drawedCommenterIndices = [];
+  document.getElementById("drawresult").innerHTML = "";
   showDrawError("");
 }
 
-function showDrawNum(elm, num) {
+function showDrawNum(num) {
   var numElement = document.createElement("div");
-  numElement.innerHTML = "中奖序号：" + num;
-  elm.appendChild(numElement);
+  numElement.innerHTML = "<hr>中奖序号：<span name='drawindex'>" + num + "</span>";
+  document.getElementById("drawresult").appendChild(numElement);
 }
 
-function showDrawPerson(elm, nickname, content) {
+function showDrawPerson(nickname, content) {
   var commentElement = document.createElement("div");
   commentElement.innerHTML = nickname + ": " + content;
-  elm.appendChild(commentElement);
+  document.getElementById("drawresult").appendChild(commentElement);
 }
 
 function showDrawError(str) {
