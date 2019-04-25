@@ -19,8 +19,7 @@ function process(callback) {
   xmlFile = lofterFile;
   const fileReader = new FileReader();
   fileReader.onload = function(ev) {
-    var fileContent = ev.target.result;
-    xmlDoc = (new DOMParser()).parseFromString(fileContent, xmlFile.type);
+    xmlDoc = (new DOMParser()).parseFromString(ev.target.result, xmlFile.type);
 
     if (isXmlValid() && processXml()) {
       callback();
