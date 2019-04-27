@@ -57,6 +57,32 @@
   background-color: #880000;
 }
 
+table {
+  width: 100%;
+}
+
+th, td {
+  text-align: left;
+  padding: 4px 10px;
+}
+
+td {
+  vertical-align: top;
+}
+
+tr {
+  border-bottom: 1px solid #222;
+  border-collapse: collapse;
+}
+
+tr:nth-child(even) {
+  background-color: #eee;
+}
+
+tr:nth-child(odd) {
+  background-color: #fff;
+}
+
 .error {
   color:#990000;
   padding: 10px 5px;

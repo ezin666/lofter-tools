@@ -159,7 +159,7 @@ function showDrawPerson(nickname, content) {
 
 function showError(str) {
   var tabcontents = document.getElementsByClassName("tabcontent");
-  var l = tabcontents.length;
+  var i, l = tabcontents.length;
   for (i = 0; i < l; ++i) {
     if (tabcontents[i].style.display != "none") {
       tabcontents[i].querySelector(".error").innerHTML = str.length == 0 ? "" : "<p>" + str + "</p>";
