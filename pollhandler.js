@@ -1,4 +1,5 @@
 const TWO_DIGIT_NUM = 10;
+var holderElement = document.createElement('div');
 
 function pollCount() {
   var l = commentList.length;
@@ -19,7 +20,7 @@ function pollCount() {
 }
 
 function processComment(pollresults, keywordsLists, comment) {
-  const commentContent = comment.getElementsByTagName("content")[0].childNodes[0].nodeValue;
+  const commentContent = fromHTMLEntity(comment.getElementsByTagName("content")[0].childNodes[0].nodeValue);
   const optionNum = pollresults.length;
   var results = [];
   var i, j;
@@ -175,6 +176,11 @@ function hasDuplicatedKeywords(keywordLists) {
       return (value.length > 0 && val.length > 0 && index != idx && value == val); 
     });
   });
+}
+
+function fromHTMLEntity(str) {
+  holderElement.innerHTML = str;
+  return holderElement.innerHTML;
 }
 
 function digitCount(x) {
