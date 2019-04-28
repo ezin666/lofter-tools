@@ -19,53 +19,86 @@ function pollCount() {
   showPollResult(pollresults);
 }
 
-function processComment(pollresults, keywordsLists, comment) {
+function processComment(pollresults, keywordLists, comment) {
   const commentContent = fromHTMLEntity(comment.getElementsByTagName("content")[0].childNodes[0].nodeValue);
   const optionNum = pollresults.length;
   var results = [];
-  var i, j;
-  var indexNum, keywordsIndices;
+  
   var multiSelect = isMultiSelect();
 
   pollresults.forEach(function(value, index, array) {
     results.push({
       idx: commentContent.indexOf(index+1),
-      keyList: getKeywordMatchList(commentContent, keywordsLists[index])
+      keyList: getKeywordMatchList(commentContent, keywordLists[index], !multiSelect)
     });
   });
   
   if (multiSelect) {
     results.forEach(function(value, index, array) {
-      // if we have a matching number, check for multi-digit numbers
-      if (value.idx >= 0) {
-        if (digitCount(optionNum) > digitCount(index+1)) {
-          for (i = TWO_DIGIT_NUM * digitCount(index+1) - 1; i < optionNum; ++i) {
-            if (results[i].idx >= 0 && (i+1).toString().includes(index+1) &&
-              value.idx - results[i].idx == (i+1).toString().indexOf(index+1)) {
-              break;
-            }
-          }
-          if (i >= optionNum) {
-            pollresults[index].votes++;
-            pollresults[index].commenters.push(commentContent);
-          }
-        }
-        else {
-          pollresults[index].votes++;
-          pollresults[index].commenters.push(commentContent);
-        }
-      }
-      else { // we dont have matching numbers then check for matching keywords
-
+      if (isMultiSelectResultValid(value, index, array, keywordLists)) {
+        pollresults[index].votes++;
+        pollresults[index].commenters.push(commentContent);
       }
     });
   }
+  else {
 
+  }
 }
 
-function getKeywordMatchList(comment, keywordList) {
+function isMultiSelectResultValid(value, index, results, keywordLists) {
+  var i, l, keyListL, topIdx, subIdx;
+   // if we have a matching number, check for multi-digit numbers
+  if (value.idx >= 0) {
+    if (digitCount(optionNum) > digitCount(index+1)) {
+      for (i = TWO_DIGIT_NUM * digitCount(index+1) - 1; i < optionNum; ++i) {
+        if (results[i].idx >= 0 && (i+1).toString().includes(index+1) &&
+          value.idx - results[i].idx == (i+1).toString().indexOf(index+1)) {
+          break;
+        }
+      }
+      if (i >= optionNum) {
+        return true;
+      }
+    }
+    else {
+      return true;
+    }
+  }
+  // we dont have matching number then check for matching keywords
+  else {
+    keyListL = value.keyList.length;
+    for (i = 0; i < keyListL; ++i) {
+      if (value.keyList[i] >= 0) {
+        TopLoop:
+        for (topIdx = 0; topIdx < optionNum; ++topIdx) {
+          l = array[topIdx].keyList.length;
+
+          for (subIdx = 0; subIdx < l; ++subIdx) {
+            if (array[topIdx].keyList[subIdx] >= 0 && (index != topIdx || i != subIdx) && keywordLists[topIdx][subIdx].includes(keywordLists[index][i])) {
+              break TopLoop;
+            }
+          }
+        }
+
+        if (topIdx >= optionNum) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+function getKeywordMatchList(comment, keywordList, searchLast = false) {
   return keywordList.map(function(value) {
-    return comment.indexOf(value);
+    if (value.length > 0) {
+      return searchLast ? comment.lastIndexOf(value) : comment.indexOf(value);
+    }
+    else {
+      return -1;
+    }
   });
 }
 
