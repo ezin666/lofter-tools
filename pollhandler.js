@@ -21,7 +21,7 @@ function pollCount() {
 
 function processComment(pollresults, keywordLists, comment) {
   const commentContent = fromHTMLEntity(comment.getElementsByTagName("content")[0].childNodes[0].nodeValue);
-  const optionNum = pollresults.length;
+  
   var results = [];
   
   var multiSelect = isMultiSelect();
@@ -35,60 +35,72 @@ function processComment(pollresults, keywordLists, comment) {
   
   if (multiSelect) {
     results.forEach(function(value, index, array) {
-      if (isMultiSelectResultValid(value, index, array, keywordLists)) {
+      if (isMultiSelectResultValid(index, array, keywordLists)) {
         pollresults[index].votes++;
         pollresults[index].commenters.push(commentContent);
       }
     });
   }
   else {
+    results.forEach(function(value, index, array) {
 
+    });
   }
 }
 
-function isMultiSelectResultValid(value, index, results, keywordLists) {
-  var i, l, keyListL, topIdx, subIdx;
+function isMultiSelectResultValid(index, results, keywordLists) {
+  var i, l, keyListL, topIdx, subIdx, currentKeyIdx, compareKeyIdx;
+  const optionNum = results.length;
+
    // if we have a matching number, check for multi-digit numbers
-  if (value.idx >= 0) {
+  if (results[index].idx >= 0) {
     if (digitCount(optionNum) > digitCount(index+1)) {
       for (i = TWO_DIGIT_NUM * digitCount(index+1) - 1; i < optionNum; ++i) {
         if (results[i].idx >= 0 && (i+1).toString().includes(index+1) &&
-          value.idx - results[i].idx == (i+1).toString().indexOf(index+1)) {
+        results[index].idx - results[i].idx == (i+1).toString().indexOf(index+1)) {
           break;
         }
       }
-      if (i >= optionNum) {
+      if (i >= optionNum && !isDigitInKeyword(index, results, keywordLists)) {
         return true;
       }
     }
-    else {
+    else if (!isDigitInKeyword(index, results, keywordLists)) {
       return true;
     }
   }
-  // we dont have matching number then check for matching keywords
-  else {
-    keyListL = value.keyList.length;
-    for (i = 0; i < keyListL; ++i) {
-      if (value.keyList[i] >= 0) {
-        TopLoop:
-        for (topIdx = 0; topIdx < optionNum; ++topIdx) {
-          l = array[topIdx].keyList.length;
+  
+  keyListL = results[index].keyList.length;
+  for (i = 0; i < keyListL; ++i) {
+    currentKeyIdx = results[index].keyList[i];
+    if (currentKeyIdx >= 0) {
+      TopLoop:
+      for (topIdx = 0; topIdx < optionNum; ++topIdx) {
+        l = results[topIdx].keyList.length;
 
-          for (subIdx = 0; subIdx < l; ++subIdx) {
-            if (array[topIdx].keyList[subIdx] >= 0 && (index != topIdx || i != subIdx) && keywordLists[topIdx][subIdx].includes(keywordLists[index][i])) {
-              break TopLoop;
-            }
+        for (subIdx = 0; subIdx < l; ++subIdx) {
+          compareKeyIdx = results[topIdx].keyList[subIdx];
+          if (compareKeyIdx >= 0 && (index != topIdx || i != subIdx) && keywordLists[topIdx][subIdx].includes(keywordLists[index][i] && currentKeyIdx - compareKeyIdx == keywordLists[topIdx][subIdx].indexOf(keywordLists[index][i]))) {
+            break TopLoop;
           }
         }
+      }
 
-        if (topIdx >= optionNum) {
-          return true;
-        }
+      if (topIdx >= optionNum) {
+        return true;
       }
     }
   }
 
   return false;
+}
+
+function isDigitInKeyword(index, results, keywordLists) {
+  return keywordLists.some(function(value, idx, array) {
+    return value.some(function(v, i, a) {
+      return (results[idx].keyList[i] >= 0 && v.includes(index+1) && results[index].idx - results[idx].keyList[i] == v.indexOf(index+1));
+    });
+  });
 }
 
 function getKeywordMatchList(comment, keywordList, searchLast = false) {
