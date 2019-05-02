@@ -28,7 +28,7 @@ function processComment(pollresults, keywordLists, comment) {
 
   pollresults.forEach(function(value, index, array) {
     results.push({
-      idx: commentContent.indexOf(index+1),
+      idx: multiSelect ? commentContent.indexOf(index+1) : commentContent.lastIndexOf(index+1),
       keyList: getKeywordMatchList(commentContent, keywordLists[index], !multiSelect)
     });
   });
@@ -42,9 +42,17 @@ function processComment(pollresults, keywordLists, comment) {
     });
   }
   else {
-    results.forEach(function(value, index, array) {
+    var maxIdx = GetMaxIdx(results);
+    var maxKeywordIdx = GetMaxKeywordIdx(results, keywordLists);
 
-    });
+    if (maxIdx >= 0 && (maxKeywordIdx[0] < 0 || results[maxIdx].idx > results[maxKeywordIdx[0]].keyList[maxKeywordIdx[1]]) && !isDigitInKeyword(maxIdx, results, keywordLists)) {
+      pollresults[maxIdx].votes++;
+      pollresults[maxIdx].commenters.push(commentContent);
+    }
+    else if (maxKeywordIdx[0] >= 0) {
+      pollresults[maxKeywordIdx[0]].votes++;
+      pollresults[maxKeywordIdx[0]].commenters.push(commentContent);
+    }
   }
 }
 
@@ -106,7 +114,7 @@ function isDigitInKeyword(index, results, keywordLists) {
 function getKeywordMatchList(comment, keywordList, searchLast = false) {
   return keywordList.map(function(value) {
     if (value.length > 0) {
-      return searchLast ? comment.lastIndexOf(value) : comment.indexOf(value);
+      return searchLast ? comment.toLowerCase().lastIndexOf(value) : comment.toLowerCase().indexOf(value);
     }
     else {
       return -1;
@@ -123,7 +131,7 @@ function getKeywordLists() {
 
   for (i = 0; i < l; ++i) {
     v = keywordElements[i].value.trim();
-    output.push(v.length <= 0 ? [] : v.split('；'));
+    output.push(v.length <= 0 ? [] : v.toLowerCase().split('；'));
   }
 
   return output;
@@ -221,6 +229,31 @@ function hasDuplicatedKeywords(keywordLists) {
       return (value.length > 0 && val.length > 0 && index != idx && value == val); 
     });
   });
+}
+
+function GetMaxIdx(array) {
+  var maxIdx = -1;
+  array.forEach(function(value, index, arr) {
+    if (value.idx >= 0 && (maxIdx < 0 || value.idx > arr[maxIdx].idx || ((index+1).toString().includes(maxIdx+1) && arr[maxIdx].idx - arr[index].idx == (index+1).toString().lastIndexOf(maxIdx+1)))) {
+      maxIdx = index;
+    }
+  });
+
+  return maxIdx;
+}
+
+function GetMaxKeywordIdx(array, keywordLists) {
+  var topIdx = -1, subIdx = -1;
+  array.forEach(function(value, index, arr) {
+    value.keyList.forEach(function(v, i, ar) {
+      if (v >= 0 && (topIdx < 0 || (v > arr[topIdx].keyList[subIdx] && (v - arr[topIdx].keyList[subIdx] != keywordLists[topIdx][subIdx].lastIndexOf(keywordLists[index][i])) || (v <= arr[topIdx].keyList[subIdx] && arr[topIdx].keyList[subIdx] - v == keywordLists[index][i].lastIndexOf(keywordLists[topIdx][subIdx]))))) {
+        topIdx = index;
+        subIdx = i;
+      }
+    });
+  });
+
+  return [topIdx, subIdx];
 }
 
 function fromHTMLEntity(str) {
