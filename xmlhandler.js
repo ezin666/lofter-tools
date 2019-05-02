@@ -1,9 +1,7 @@
 var xmlFile = null;
 var xmlDoc = null;
-
 var commenterList = null;
 var commentList = null;
-var drawedCommenterIndices = [];
 
 function process(callback) {
   const lofterFile = document.getElementById("file").files[0];
@@ -79,7 +77,7 @@ function draw()
   showError("");
 
   if (commenterList != null) {
-    if (commenterList.length > 0 && drawedCommenterIndices.length < commenterList.length) {
+    if (commenterList.length > 0 && document.getElementsByName("drawindex").length < commenterList.length) {
       drawFromComment();
     }
     else {
@@ -93,7 +91,13 @@ function draw()
 
 function drawFromComment()
 {
-  var drawIndex;
+  var drawIndex, i, l, drawedCommenterIndices = [];
+  var drawedIndicesElements = document.getElementsByName("drawindex");
+  l = drawedIndicesElements.length;
+  for (i = 0; i < l; ++i) {
+    drawedCommenterIndices.push(parseInt(drawedIndicesElements[i].innerHTML));
+  }
+
   do {
     drawIndex = Math.floor(Math.random() * commenterList.length);
   } while (drawedCommenterIndices.includes(drawIndex));
@@ -110,8 +114,6 @@ function drawFromComment()
         );
     }
   }
-
-  drawedCommenterIndices.push(drawIndex);
 }
 
 function isXmlValid() {
@@ -140,9 +142,7 @@ function resetFileCache() {
   xmlDoc = null;
   commenterList = null;
   commentList = null;
-  drawedCommenterIndices = [];
-  document.getElementById("drawresult").innerHTML = "";
-  showError("");
+  clearDraw();
 }
 
 function showDrawNum(num) {
@@ -166,4 +166,9 @@ function showError(str) {
       break;
     }
   }
+}
+
+function clearDraw() {
+  document.getElementById("drawresult").innerHTML = "";
+  showError("");
 }

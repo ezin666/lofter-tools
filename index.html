@@ -17,12 +17,13 @@
       </fieldset>
 
       <div class="tab">
-        <button class="tablink" onclick="openTab(event,'draw')">抽奖</button>
-        <button class="tablink" onclick="openTab(event,'poll')" id="defaultOpen">计票</button>
+        <button class="tablink" onclick="openTab(event,'draw')" id="defaultOpen">抽奖</button>
+        <button class="tablink" onclick="openTab(event,'poll')" >计票</button>
       </div>
 
       <div id="draw" class="tabcontent">
         <button id="drawbutton" onclick="draw()">抽奖</button>
+        <button id="clearbutton" onclick="clearDraw()">清空</button>
         <div class="error"></div>
         <div id="drawresult"></div>
       </div>
