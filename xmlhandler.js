@@ -102,6 +102,10 @@ function drawFromComment()
     drawIndex = Math.floor(Math.random() * commenterList.length);
   } while (drawedCommenterIndices.includes(drawIndex));
 
+  if (l <= 0) {
+    showDrawBasicStats();
+  }
+
   showDrawNum(drawIndex);
 
   var commenter = commenterList[drawIndex];
@@ -116,10 +120,13 @@ function drawFromComment()
   }
 }
 
+function showDrawBasicStats() {
+  document.getElementById("drawresult").innerHTML = "参与人数：" + commenterList.length;
+}
+
 function isXmlValid() {
   return xmlDoc.getElementsByTagName("lofterBlogExport") != null;
 }
-
 
 function hasReadFile(file) {
   return (xmlFile != null && xmlDoc != null && xmlFile == file);
