@@ -120,18 +120,6 @@ function isXmlValid() {
   return xmlDoc.getElementsByTagName("lofterBlogExport") != null;
 }
 
-function extractPostPermaLink(url) {
-  var permalink;
-
-  if (!url.includes("/")) {
-    permalink = url;
-  }
-  else if (url.startsWith("http") || url.startsWith("www")) {
-    permalink = url.slice(url.lastIndexOf("/")+1, url.length);
-  }
-
-  return permalink;
-}
 
 function hasReadFile(file) {
   return (xmlFile != null && xmlDoc != null && xmlFile == file);
@@ -143,32 +131,4 @@ function resetFileCache() {
   commenterList = null;
   commentList = null;
   clearDraw();
-}
-
-function showDrawNum(num) {
-  var numElement = document.createElement("div");
-  numElement.innerHTML = "<hr>中奖序号：<span name='drawindex'>" + num + "</span>";
-  document.getElementById("drawresult").appendChild(numElement);
-}
-
-function showDrawPerson(nickname, content) {
-  var commentElement = document.createElement("div");
-  commentElement.innerHTML = nickname + ": " + content;
-  document.getElementById("drawresult").appendChild(commentElement);
-}
-
-function showError(str) {
-  var tabcontents = document.getElementsByClassName("tabcontent");
-  var i, l = tabcontents.length;
-  for (i = 0; i < l; ++i) {
-    if (tabcontents[i].style.display != "none") {
-      tabcontents[i].querySelector(".error").innerHTML = str.length == 0 ? "" : "<p>" + str + "</p>";
-      break;
-    }
-  }
-}
-
-function clearDraw() {
-  document.getElementById("drawresult").innerHTML = "";
-  showError("");
 }

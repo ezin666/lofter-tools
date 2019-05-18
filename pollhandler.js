@@ -265,20 +265,3 @@ function GetMaxKeywordIdx(array, keywordLists) {
 
   return [topIdx, subIdx];
 }
-
-function markKeyInString(str, keyArray) {
-  return str.substring(0, keyArray[0]) + "<mark>" + str.substr(keyArray[0], keyArray[1]) + "</mark>" + str.substring(keyArray[0] + keyArray[1], str.length);
-}
-
-function fromHTMLEntity(str) {
-  holderElement.innerHTML = str;
-  return holderElement.innerHTML;
-}
-
-function digitCount(x) {
-  return Math.floor(Math.log10(x) + 1);
-}
-
-Math.log10 = Math.log10 || function(x) {
-  return Math.log(x) * Math.LOG10E;
-};
