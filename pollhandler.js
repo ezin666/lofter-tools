@@ -34,11 +34,20 @@ function processComment(pollresults, keywordLists, comment) {
   });
   
   if (multiSelect) {
-    results.forEach(function(value, index, array) {
-      if (isMultiSelectResultValid(index, array, keywordLists)) {
-        pollresults[index].votes++;
-        pollresults[index].commenters.push(commentContent);
-      }
+    var resultIndexArray;
+
+    results.forEach(function(value, index, array) {    
+        do {
+          resultIndexArray = isMultiSelectResultValid(index, array, keywordLists);
+          if (resultIndexArray[0] >= 0) {
+            pollresults[index].votes++;
+            pollresults[index].commenters.push(markKeyInString(commentContent, resultIndexArray));
+            break;
+          }
+          else {
+            results[index].idx = commentContent.indexOf(index+1, value.idx + 1);
+          }
+        } while (value.idx >= 0 && value.idx < commentContent.length);
     });
   }
   else {
@@ -46,12 +55,13 @@ function processComment(pollresults, keywordLists, comment) {
     var maxKeywordIdx = GetMaxKeywordIdx(results, keywordLists);
 
     if (maxIdx >= 0 && (maxKeywordIdx[0] < 0 || results[maxIdx].idx > results[maxKeywordIdx[0]].keyList[maxKeywordIdx[1]]) && !isDigitInKeyword(maxIdx, results, keywordLists)) {
+      
       pollresults[maxIdx].votes++;
-      pollresults[maxIdx].commenters.push(commentContent);
+      pollresults[maxIdx].commenters.push(markKeyInString(commentContent, [results[maxIdx].idx, digitCount(maxIdx + 1)]));
     }
     else if (maxKeywordIdx[0] >= 0) {
       pollresults[maxKeywordIdx[0]].votes++;
-      pollresults[maxKeywordIdx[0]].commenters.push(commentContent);
+      pollresults[maxKeywordIdx[0]].commenters.push(markKeyInString(commentContent, [results[maxKeywordIdx[0]].keyList[maxKeywordIdx[1]], keywordLists[maxKeywordIdx[0]][maxKeywordIdx[1]].length]));
     }
   }
 }
@@ -70,11 +80,11 @@ function isMultiSelectResultValid(index, results, keywordLists) {
         }
       }
       if (i >= optionNum && !isDigitInKeyword(index, results, keywordLists)) {
-        return true;
+        return [results[index].idx, digitCount(index+1)];
       }
     }
     else if (!isDigitInKeyword(index, results, keywordLists)) {
-      return true;
+      return [results[index].idx, digitCount(index+1)];
     }
   }
   
@@ -95,12 +105,12 @@ function isMultiSelectResultValid(index, results, keywordLists) {
       }
 
       if (topIdx >= optionNum) {
-        return true;
+        return [currentKeyIdx, keywordLists[index][i].length];
       }
     }
   }
 
-  return false;
+  return [-1, -1];
 }
 
 function isDigitInKeyword(index, results, keywordLists) {
@@ -254,6 +264,10 @@ function GetMaxKeywordIdx(array, keywordLists) {
   });
 
   return [topIdx, subIdx];
+}
+
+function markKeyInString(str, keyArray) {
+  return str.substring(0, keyArray[0]) + "<mark>" + str.substr(keyArray[0], keyArray[1]) + "</mark>" + str.substring(keyArray[0] + keyArray[1], str.length);
 }
 
 function fromHTMLEntity(str) {
