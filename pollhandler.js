@@ -7,13 +7,17 @@ function pollCount() {
   var pollresults = initializePollResults(polloptioncount);
   var keywordLists = getKeywordLists();
 
-  if (hasDuplicatedKeywords(keywordLists)) {
+  if (hasDuplicateKeywords(keywordLists)) {
     showError("投票选项含有重复关键词，请重新检查。");
     return;
   }
 
   for (var i = 0; i < l; ++i) {
-    processComment(pollresults, keywordLists, commentList[i]);
+    const commenterId = commentList[i].getElementsByTagName("publisherUserId")[0].childNodes[0].nodeValue;
+    if (isMultiSelect() || !hasCommenterVoted(pollresults, commenterId))
+    {
+      processComment(pollresults, keywordLists, commentList[i]);
+    }
   }
 
   showPollResult(pollresults);
@@ -21,6 +25,7 @@ function pollCount() {
 
 function processComment(pollresults, keywordLists, comment) {
   const commentContent = fromHTMLEntity(comment.getElementsByTagName("content")[0].childNodes[0].nodeValue);
+  const commenterId = comment.getElementsByTagName("publisherUserId")[0].childNodes[0].nodeValue;
   
   var results = [];
   
@@ -36,18 +41,21 @@ function processComment(pollresults, keywordLists, comment) {
   if (multiSelect) {
     var resultIndexArray;
 
-    results.forEach(function(value, index, array) {    
+    results.forEach(function(value, index, array) {
+      if (!pollresults[index].commenters.includes(commenterId)) { 
         do {
           resultIndexArray = isMultiSelectResultValid(index, array, keywordLists);
           if (resultIndexArray[0] >= 0) {
             pollresults[index].votes++;
-            pollresults[index].commenters.push(markKeyInString(commentContent, resultIndexArray));
+            pollresults[index].comments.push(markKeyInString(commentContent, resultIndexArray));
+            pollresults[index].commenters.push(commenterId);
             break;
           }
           else {
             results[index].idx = commentContent.indexOf(index+1, value.idx + 1);
           }
         } while (value.idx >= 0 && value.idx < commentContent.length);
+      }
     });
   }
   else {
@@ -55,13 +63,18 @@ function processComment(pollresults, keywordLists, comment) {
     var maxKeywordIdx = GetMaxKeywordIdx(results, keywordLists);
 
     if (maxIdx >= 0 && (maxKeywordIdx[0] < 0 || results[maxIdx].idx > results[maxKeywordIdx[0]].keyList[maxKeywordIdx[1]]) && !isDigitInKeyword(maxIdx, results, keywordLists)) {
-      
-      pollresults[maxIdx].votes++;
-      pollresults[maxIdx].commenters.push(markKeyInString(commentContent, [results[maxIdx].idx, digitCount(maxIdx + 1)]));
+      if (!pollresults[maxIdx].commenters.includes(commenterId)) {
+        pollresults[maxIdx].votes++;
+        pollresults[maxIdx].comments.push(markKeyInString(commentContent, [results[maxIdx].idx, digitCount(maxIdx + 1)]));
+        pollresults[maxIdx].commenters.push(commenterId);
+      }
     }
     else if (maxKeywordIdx[0] >= 0) {
-      pollresults[maxKeywordIdx[0]].votes++;
-      pollresults[maxKeywordIdx[0]].commenters.push(markKeyInString(commentContent, [results[maxKeywordIdx[0]].keyList[maxKeywordIdx[1]], keywordLists[maxKeywordIdx[0]][maxKeywordIdx[1]].length]));
+      if (!pollresults[maxKeywordIdx[0]].commenters.includes(commenterId)) {
+        pollresults[maxKeywordIdx[0]].votes++;
+        pollresults[maxKeywordIdx[0]].comments.push(markKeyInString(commentContent, [results[maxKeywordIdx[0]].keyList[maxKeywordIdx[1]], keywordLists[maxKeywordIdx[0]][maxKeywordIdx[1]].length]));
+        pollresults[maxKeywordIdx[0]].commenters.push(commenterId);
+      }
     }
   }
 }
@@ -153,13 +166,14 @@ function initializePollResults(count) {
     pollresults.push({
       index: i,
       votes: 0,
+      comments: [],
       commenters: []
     });
   }
   return pollresults;
 }
 
-function hasDuplicatedKeywords(keywordLists) {
+function hasDuplicateKeywords(keywordLists) {
   var mergedKeywordLists = [];
 
   keywordLists.forEach(function(value) {
@@ -196,4 +210,10 @@ function GetMaxKeywordIdx(array, keywordLists) {
   });
 
   return [topIdx, subIdx];
+}
+
+function hasCommenterVoted(pollresults, commenterId) {
+  return pollresults.some(function(pollresult) {
+    return pollresult.commenters.includes(commenterId);
+  });
 }

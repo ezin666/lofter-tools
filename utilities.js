@@ -41,6 +41,11 @@ function clearDraw() {
 }
 
 /* For poll */
+const MIN_COMMENT_DISPLAY_LINE = 3;
+const ALL_COMMENT_EXPAND_STR = "&#8681;展开全部";
+const ALL_COMMENT_COLLAPSE_STR = "&#8679;收起全部";
+const COMMENT_EXPAND_STR = "&#8675;展开";
+
 function showPollResult(result) {
   result.sort(function(l, r) {
     return r.votes - l.votes;
@@ -51,18 +56,55 @@ function showPollResult(result) {
     <tr>\
       <th>选项</th>\
       <th>票数</th>\
-      <th>投票者</th>\
+      <th>投票评论&nbsp;<span class='togglerhead' onclick='toggleAllComment(true)'>" + ALL_COMMENT_EXPAND_STR + "</span>&nbsp;<span class='togglerhead' onclick='toggleAllComment(false)'>" + ALL_COMMENT_COLLAPSE_STR + "</span</th>\
     </tr>";
 
+  var commentListStr;
+
   result.forEach(function(value) {
+    if (value.comments.length > MIN_COMMENT_DISPLAY_LINE) {
+      commentListStr = value.comments.slice(0, MIN_COMMENT_DISPLAY_LINE).join("<br/>") +
+                     "<br/><span class='toggler' onclick='toggleComment(this)'>" + COMMENT_EXPAND_STR + "</span><div class='togglecontent' style='display:none'>" +
+                     value.comments.slice(MIN_COMMENT_DISPLAY_LINE).join("<br/>");
+    }
+    else {
+      commentListStr = value.comments.join("<br/>");
+    }
+    
     output += "<tr>\
         <td>" + (value.index + 1) + "</td>\
         <td>" + value.votes + "</td> \
-        <td>" + value.commenters.join("<br/>") + "</td>\
+        <td>" + commentListStr + "</td>\
       </tr>"
   });
 
+  output += "</table>";
+
   document.getElementById("pollresult").innerHTML = output;
+}
+
+function toggleAllComment(show) {
+  var togglerElems = document.getElementsByClassName("toggler");
+  var i, l = togglerElems.length;
+  for (i = 0; i < l; ++i) {
+    toggleComment(togglerElems[i], true, show);
+  }
+}
+
+function toggleComment(elem, forceToggle = false, show = false) {
+  if (!forceToggle) {
+    show = !(elem.nextSibling.style.display === "block");
+  }
+
+  if (show) {
+    elem.nextSibling.style.display = "block";
+    elem.innerHTML = "";
+  }
+  else {
+    elem.nextSibling.style.display = "none";
+    elem.innerHTML = COMMENT_EXPAND_STR;
+  }
+  
 }
 
 function addPollOption() {

@@ -4,6 +4,8 @@ var commenterList = null;
 var commentList = null;
 
 function process(callback) {
+  showError("");
+
   const lofterFile = document.getElementById("file").files[0];
 
   if (hasReadFile(lofterFile))

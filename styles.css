@@ -91,3 +91,13 @@ tr:nth-child(odd) {
 .note {
   color: #666;
 }
+
+.toggler, .togglerhead {
+  color: #336162;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.togglecontent {
+  display: none;
+}
