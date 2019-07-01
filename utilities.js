@@ -181,3 +181,25 @@ function digitCount(x) {
 Math.log10 = Math.log10 || function(x) {
   return Math.log(x) * Math.LOG10E;
 };
+
+String.prototype.allOccurrence = function(str) {
+  if (str.length <= 0) {
+    return [];
+  }
+
+  var indices = [], searchIdx = 0, idx;
+  while ((idx = this.indexOf(str, searchIdx)) > -1) {
+    indices.push(idx);
+    searchIdx = idx + 1;
+  }
+  
+  return indices;
+};
+
+Array.prototype.last = function() {
+  if (this.length <= 0) {
+    return undefined;
+  }
+  
+  return this[this.length - 1];
+}

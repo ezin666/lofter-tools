@@ -12,136 +12,145 @@ function pollCount() {
     return;
   }
 
+  var keywordInclusionList = getKeywordInclusionList(keywordLists);
+  var numberInclusionList = getNumberInclusionList(keywordLists);
+
   for (var i = 0; i < l; ++i) {
     const commenterId = commentList[i].getElementsByTagName("publisherUserId")[0].childNodes[0].nodeValue;
     if (isMultiSelect() || !hasCommenterVoted(pollresults, commenterId))
     {
-      processComment(pollresults, keywordLists, commentList[i]);
+      processComment(pollresults, keywordLists, numberInclusionList, keywordInclusionList, commentList[i]);
     }
   }
 
   showPollResult(pollresults);
 }
 
-function processComment(pollresults, keywordLists, comment) {
+function processComment(pollresults, keywordLists, numberInclusionList, keywordInclusionList, comment) {
   const commentContent = fromHTMLEntity(comment.getElementsByTagName("content")[0].childNodes[0].nodeValue);
   const commenterId = comment.getElementsByTagName("publisherUserId")[0].childNodes[0].nodeValue;
   
-  var results = [];
-  
   var multiSelect = isMultiSelect();
 
-  pollresults.forEach(function(value, index, array) {
-    results.push({
-      idx: multiSelect ? commentContent.indexOf(index+1) : commentContent.lastIndexOf(index+1),
-      keyList: getKeywordMatchList(commentContent, keywordLists[index], !multiSelect)
-    });
+  var matchResults = pollresults.map(function(val, idx) {
+    return {
+      numMatchList: commentContent.allOccurrence((idx+1)),
+      keyMatchList: getKeywordMatchList(commentContent, keywordLists[idx])
+    };
   });
-  
-  if (multiSelect) {
-    var resultIndexArray;
 
-    results.forEach(function(value, index, array) {
-      if (!pollresults[index].commenters.includes(commenterId)) { 
-        do {
-          resultIndexArray = isMultiSelectResultValid(index, array, keywordLists);
-          if (resultIndexArray[0] >= 0) {
-            pollresults[index].votes++;
-            pollresults[index].comments.push(markKeyInString(commentContent, resultIndexArray));
-            pollresults[index].commenters.push(commenterId);
-            break;
-          }
-          else {
-            results[index].idx = commentContent.indexOf(index+1, value.idx + 1);
-          }
-        } while (value.idx >= 0 && value.idx < commentContent.length);
+  var validKeyMatchIdx;
+
+  matchResults.forEach(function(matchRes, resIdx, matchResultsArr) {
+    if (!pollresults[resIdx].commenters.includes(commenterId)) {
+      validateNumberIndices(resIdx, matchResultsArr, keywordLists, numberInclusionList);
+      if (multiSelect && matchRes.numMatchList.length > 0) {
+        pollresults[resIdx].votes++;
+        pollresults[resIdx].comments.push(markKeyInString(commentContent, [matchResultsArr.numMatchList[0], digitCount(resIdx+1)]));
+        pollresults[resIdx].commenters.push(commenterId);
       }
-    });
-  }
-  else {
-    var maxIdx = GetMaxIdx(results);
-    var maxKeywordIdx = GetMaxKeywordIdx(results, keywordLists);
-
-    if (maxIdx >= 0 && (maxKeywordIdx[0] < 0 || results[maxIdx].idx > results[maxKeywordIdx[0]].keyList[maxKeywordIdx[1]]) && !isDigitInKeyword(maxIdx, results, keywordLists)) {
-      if (!pollresults[maxIdx].commenters.includes(commenterId)) {
-        pollresults[maxIdx].votes++;
-        pollresults[maxIdx].comments.push(markKeyInString(commentContent, [results[maxIdx].idx, digitCount(maxIdx + 1)]));
-        pollresults[maxIdx].commenters.push(commenterId);
+      else {
+        validateKeywordIndices(resIdx, matchResultsArr, keywordLists, keywordInclusionList);
+        
+        if (multiSelect && (validKeyMatchIdx = matchResultsArr.keyMatchList.findIndex(function(matchList) {return matchList.length > 0;})) >= 0) {
+          pollresults[resIdx].votes++;
+          pollresults[resIdx].comments.push(markKeyInString(commentContent, [matchResultsArr.keyMatchList[validKeyMatchIdx][0], keywordLists[resIdx][validKeyMatchIdx].length]));
+          pollresults[resIdx].commenters.push(commenterId);
+        }
       }
     }
-    else if (maxKeywordIdx[0] >= 0) {
-      if (!pollresults[maxKeywordIdx[0]].commenters.includes(commenterId)) {
-        pollresults[maxKeywordIdx[0]].votes++;
-        pollresults[maxKeywordIdx[0]].comments.push(markKeyInString(commentContent, [results[maxKeywordIdx[0]].keyList[maxKeywordIdx[1]], keywordLists[maxKeywordIdx[0]][maxKeywordIdx[1]].length]));
-        pollresults[maxKeywordIdx[0]].commenters.push(commenterId);
+  });
+
+  if (!multiSelect) {
+    var maxResultIdx = getMaxResultIdx(matchResults);
+    if (maxResultIdx[0] >= 0) {
+      if (maxResultIdx.length > 1) {
+        pollresults[maxResultIdx[0]].comments.push(markKeyInString(commentContent, [matchResults[maxResultIdx[0]].keyMatchList[maxResultIdx[1]].last(), keywordLists[maxResultIdx[0]][maxResultIdx[1]].length]));
       }
+      else {
+        pollresults[maxResultIdx[0]].comments.push(markKeyInString(commentContent, [matchResults[maxResultIdx[0]].numMatchList.last(), digitCount(maxResultIdx[0]+1)]));
+      }
+      pollresults[maxResultIdx[0]].votes++;
+      pollresults[maxResultIdx[0]].commenters.push(commenterId);
     }
   }
 }
 
-function isMultiSelectResultValid(index, results, keywordLists) {
-  var i, l, keyListL, topIdx, subIdx, currentKeyIdx, compareKeyIdx;
-  const optionNum = results.length;
-
-   // if we have a matching number, check for multi-digit numbers
-  if (results[index].idx >= 0) {
-    if (digitCount(optionNum) > digitCount(index+1)) {
-      for (i = TWO_DIGIT_NUM * digitCount(index+1) - 1; i < optionNum; ++i) {
-        if (results[i].idx >= 0 && (i+1).toString().includes(index+1) &&
-        results[index].idx - results[i].idx == (i+1).toString().indexOf(index+1)) {
-          break;
-        }
-      }
-      if (i >= optionNum && !isDigitInKeyword(index, results, keywordLists)) {
-        return [results[index].idx, digitCount(index+1)];
-      }
-    }
-    else if (!isDigitInKeyword(index, results, keywordLists)) {
-      return [results[index].idx, digitCount(index+1)];
-    }
+function validateNumberIndices(resIdx, matchResults, keywordLists, numberInclusionList) {
+  if (matchResults[resIdx].numMatchList.length <= 0) {
+    return;
   }
-  
-  keyListL = results[index].keyList.length;
-  for (i = 0; i < keyListL; ++i) {
-    currentKeyIdx = results[index].keyList[i];
-    if (currentKeyIdx >= 0) {
-      TopLoop:
-      for (topIdx = 0; topIdx < optionNum; ++topIdx) {
-        l = results[topIdx].keyList.length;
 
-        for (subIdx = 0; subIdx < l; ++subIdx) {
-          compareKeyIdx = results[topIdx].keyList[subIdx];
-          if (compareKeyIdx >= 0 && (index != topIdx || i != subIdx) && keywordLists[topIdx][subIdx].includes(keywordLists[index][i] && currentKeyIdx - compareKeyIdx == keywordLists[topIdx][subIdx].indexOf(keywordLists[index][i]))) {
-            break TopLoop;
-          }
-        }
-      }
+  const number = resIdx + 1, pollOptionCount = matchResults.length;
+  var cmpNumIdx, numOffsets, numMatchList = matchResults[resIdx].numMatchList;
 
-      if (topIdx >= optionNum) {
-        return [currentKeyIdx, keywordLists[index][i].length];
+  // if we have a matching number, check all numbers that's at least 1 digit larger than it
+  if (digitCount(pollOptionCount) > digitCount(number)) {
+    for (cmpNumIdx = TWO_DIGIT_NUM * digitCount(number) - 1; cmpNumIdx < pollOptionCount && numMatchList.length > 0; ++cmpNumIdx) {
+      // check if a larger number that contains current number also occurs in the comment
+      if (matchResults[cmpNumIdx].numMatchList.length > 0 && (cmpNumIdx+1).toString().includes(number)) {
+        numOffsets = (cmpNumIdx+1).toString().allOccurrence(number);
+        
+        // remove all number occurrence that's in inclusion list
+        numMatchList = numMatchList.filter(function(numMatchIdx) {
+           return matchResults[cmpNumIdx].numMatchList.every(function(cmpNumMatchIdx) {
+            return !numOffsets.includes(numMatchIdx - cmpNumMatchIdx);
+          });
+        });
       }
     }
   }
 
-  return [-1, -1];
+  // check for keyword inclusion
+  var keywordMatchIdxList;
+
+  // check if number is included in any keyword->
+  if (numMatchList.length > 0) {
+    numberInclusionList[resIdx].forEach(function(keyMatchIdxPair) {
+      keywordMatchIdxList = matchResults[keyMatchIdxPair[0]].keyMatchList[keyMatchIdxPair[1]];
+      numOffsets = keywordLists[keyMatchIdxPair[0]][keyMatchIdxPair[1]].allOccurrence(number);
+
+      numMatchList = numMatchList.filter(function(numMatchIdx) {
+        return (keywordMatchIdxList.length <= 0 || keywordMatchIdxList.every(function(keyMatchIdx) {
+          return !numOffsets.includes(numMatchIdx - keyMatchIdx);
+        }));
+      });
+    });
+  }
+
+  matchResults[resIdx].numMatchList = numMatchList;
+}
+
+function validateKeywordIndices(resIdx, matchResults, keywordLists, keywordInclusionList) {
+  var keyOffsets, keywordMatchIdxList;
+  var test = false;
+
+  matchResults[resIdx].keyMatchList.forEach(function(matchIdxList, keywordIdx, arr) {
+   
+    keywordInclusionList[resIdx][keywordIdx].forEach(function(keyMatchIdxPair) {
+      keywordMatchIdxList = matchResults[keyMatchIdxPair[0]].keyMatchList[keyMatchIdxPair[1]];
+      keyOffsets = keywordLists[keyMatchIdxPair[0]][keyMatchIdxPair[1]].allOccurrence(keywordLists[resIdx][keywordIdx]);
+      
+      arr[keywordIdx] = matchIdxList.filter(function(matchIdx) {
+        return (keywordMatchIdxList.length <= 0 || keywordMatchIdxList.every(function(keyMatchIdx) {
+          return !keyOffsets.includes(matchIdx - keyMatchIdx);
+        }));
+      });
+    });
+  });
 }
 
 function isDigitInKeyword(index, results, keywordLists) {
-  return keywordLists.some(function(value, idx, array) {
-    return value.some(function(v, i, a) {
+  return keywordLists.some(function(value, idx) {
+    return value.some(function(v, i) {
       return (results[idx].keyList[i] >= 0 && v.includes(index+1) && results[index].idx - results[idx].keyList[i] == v.indexOf(index+1));
     });
   });
 }
 
-function getKeywordMatchList(comment, keywordList, searchLast = false) {
+function getKeywordMatchList(comment, keywordList) {
   return keywordList.map(function(value) {
-    if (value.length > 0) {
-      return searchLast ? comment.toLowerCase().lastIndexOf(value) : comment.toLowerCase().indexOf(value);
-    }
-    else {
-      return -1;
-    }
+    return comment.toLowerCase().allOccurrence(value);
   });
 }
 
@@ -154,7 +163,7 @@ function getKeywordLists() {
 
   for (i = 0; i < l; ++i) {
     v = keywordElements[i].value.trim();
-    output.push(v.length <= 0 ? [] : v.toLowerCase().split('；'));
+    output.push(v.length <= 0 ? [] : v.toLowerCase().split('；').filter(function(value) { return value.length > 0; }));
   }
 
   return output;
@@ -187,33 +196,87 @@ function hasDuplicateKeywords(keywordLists) {
   });
 }
 
-function GetMaxIdx(array) {
-  var maxIdx = -1;
-  array.forEach(function(value, index, arr) {
-    if (value.idx >= 0 && (maxIdx < 0 || value.idx > arr[maxIdx].idx || ((index+1).toString().includes(maxIdx+1) && arr[maxIdx].idx - arr[index].idx == (index+1).toString().lastIndexOf(maxIdx+1)))) {
-      maxIdx = index;
+function getMaxResultIdx(matchResults) {
+  var maxIdx = -1, maxResIdx = -1, temp;
+  var topIdx = -1, subIdx = -1, maxKeyIdx = -1;
+
+  matchResults.forEach(function(matchResult, resIdx) {
+
+    if (matchResult.numMatchList.length > 0) {
+      temp = matchResult.numMatchList.last();
+      if (temp > maxIdx) {
+        maxIdx = temp;
+        maxResIdx = resIdx;
+      }
     }
-  });
 
-  return maxIdx;
-}
-
-function GetMaxKeywordIdx(array, keywordLists) {
-  var topIdx = -1, subIdx = -1;
-  array.forEach(function(value, index, arr) {
-    value.keyList.forEach(function(v, i, ar) {
-      if (v >= 0 && (topIdx < 0 || (v > arr[topIdx].keyList[subIdx] && (v - arr[topIdx].keyList[subIdx] != keywordLists[topIdx][subIdx].lastIndexOf(keywordLists[index][i])) || (v <= arr[topIdx].keyList[subIdx] && arr[topIdx].keyList[subIdx] - v == keywordLists[index][i].lastIndexOf(keywordLists[topIdx][subIdx]))))) {
-        topIdx = index;
-        subIdx = i;
+    matchResult.keyMatchList.forEach(function(k, i) {
+      if (k.length > 0) {
+        temp = k.last();
+        if (temp > maxKeyIdx) {
+          maxKeyIdx = temp;
+          topIdx = resIdx;
+          subIdx = i;
+        }
       }
     });
   });
 
-  return [topIdx, subIdx];
+  if (maxIdx < 0 && maxKeyIdx < 0) {
+    return [-1];
+  }
+  else if (maxIdx > maxKeyIdx) {
+    return [maxResIdx];
+  }
+  else {
+    return [topIdx, subIdx];
+  }
 }
 
 function hasCommenterVoted(pollresults, commenterId) {
   return pollresults.some(function(pollresult) {
     return pollresult.commenters.includes(commenterId);
   });
+}
+
+function getKeywordInclusionList(keywordLists) {
+  var inclusionList = [];
+  keywordLists.forEach(function(keyList, keyListIdx) {
+    inclusionList.push([]);
+
+    keyList.forEach(function(key, keyIdx) {
+      inclusionList[keyListIdx].push([]);
+
+      keywordLists.forEach(function(cmpKeyList, cmpKeyListIdx) {
+        if (cmpKeyListIdx != keyListIdx) {
+          cmpKeyList.forEach(function(cmpKey, cmpKeyIdx) {
+            if (cmpKey.includes(key)) {
+              inclusionList[keyListIdx][keyIdx].push([cmpKeyListIdx, cmpKeyIdx]);
+            }
+          });
+        }
+      });
+    });
+  });
+  return inclusionList;
+}
+
+function getNumberInclusionList(keywordLists) {
+  var inclusionList = [];
+  var i, keylistLength = keywordLists.length;
+
+  for (i = 0; i < keylistLength; ++i) {
+    inclusionList.push([]);
+
+    keywordLists.forEach(function(keyList, keyListIdx) {
+      if (i != keyListIdx) {
+        keyList.forEach(function(key, keyIdx) {
+          if (key.includes(i+1)) {
+            inclusionList[i].push([keyListIdx, keyIdx]);
+          }
+        });
+      }
+    });
+  }
+  return inclusionList;
 }
