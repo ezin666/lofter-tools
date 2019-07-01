@@ -101,3 +101,28 @@ tr:nth-child(odd) {
 .togglecontent {
   display: none;
 }
+
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background-color: #336162;
+  color: #eee;
+  text-align: center;
+}
+.footer a {
+  color: #eee;
+}
+
+.main {
+  background-color: #fff;
+}
+
+body {
+  background-color: #ededef;
+}
+
+.button-sm {
+  margin: 10px 15px 10px 0;
+}

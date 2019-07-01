@@ -11,10 +11,11 @@
     <script src="utilities.js" defer="true"></script>
   </head>
   <body>
+    <div class="main">
       <noscript><p>您的浏览器不支持Javascript!</p></noscript>
       <fieldset><label>XML导出文件：</label><input type="file" onchange="resetFileCache()" accept=".xml" name="xmlpath" id="file" required>
       </fieldset>
-      <fieldset><label>Lofter文章地址：</label><input id="url" onchange="resetFileCache()" type="url" name="posturl" required>
+      <fieldset><label>Lofter文章地址：</label><input id="url" size="80" onchange="resetFileCache()" type="url" name="posturl" required>
       </fieldset>
 
       <div class="tab">
@@ -23,26 +24,29 @@
       </div>
 
       <div id="draw" class="tabcontent">
-        <button id="drawbutton" onclick="draw()">抽奖</button>
-        <button id="clearbutton" onclick="clearDraw()">清空</button>
+        <button id="drawbutton" onclick="draw()" class="button-sm">抽奖</button>
+        <button id="clearbutton" onclick="clearDraw()" class="button-sm">清空</button>
         <div class="error"></div>
         <div id="drawresult"></div>
       </div>
       
       <div id="poll" class="tabcontent">
-        <button onclick="addPollOption()">添加投票选项</button>
         <label class="note">
           <p>* 默认只查找阿拉伯数字字符（1, 2, 3...等）。若需要查找汉字数字（一，二，三...等）请填写在关键词一栏。</p>
           <p>* 单选投票默认选择评论中最后出现的数字或关键词。</p>
           <p>* 多个关键词请用中文分号（；）隔开。</p>
         </label>
+        <button class="button-sm" onclick="addPollOption()">添加投票选项</button>
         <div id="polloptions"></div>
         <input id="multiselect" name="ismultiselect" type="checkbox">多选投票</input>
-        <button id="pollbutton" onclick="process(pollCount)" disabled>计票</button>
+        <button id="pollbutton" onclick="process(pollCount)" disabled class="button-sm">计票</button>
         <div class="error"></div>
         <div id="pollresult"></div>
       </div>
-
+    </div>
+    <div class="footer">
+      <p>Powered by <a href="https://github.com/ezin666/lofter-tools" target="_blank">ezin666</a></p>
+    </div>
 <script>
 function openTab(ev, tabName) {
   var i, l, tabcontent, tablinks;
