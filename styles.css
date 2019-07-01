@@ -83,6 +83,13 @@ tr:nth-child(odd) {
   background-color: #fff;
 }
 
+input[type=file], input[type=url] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
 .error {
   color:#990000;
   padding: 10px 5px;
@@ -121,8 +128,10 @@ tr:nth-child(odd) {
 
 body {
   background-color: #ededef;
+  margin-bottom: 70px;
 }
 
 .button-sm {
-  margin: 10px 15px 10px 0;
+  font-size: 16px;
+  margin: 7px 13px 10px 0;
 }

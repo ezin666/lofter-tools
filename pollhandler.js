@@ -29,6 +29,7 @@ function pollCount() {
 function processComment(pollresults, keywordLists, numberInclusionList, keywordInclusionList, comment) {
   const commentContent = fromHTMLEntity(comment.getElementsByTagName("content")[0].childNodes[0].nodeValue);
   const commenterId = comment.getElementsByTagName("publisherUserId")[0].childNodes[0].nodeValue;
+  const commenterNick = comment.getElementsByTagName("publisherNick")[0].childNodes[0].nodeValue;
   
   var multiSelect = isMultiSelect();
 
@@ -44,17 +45,17 @@ function processComment(pollresults, keywordLists, numberInclusionList, keywordI
   matchResults.forEach(function(matchRes, resIdx, matchResultsArr) {
     if (!pollresults[resIdx].commenters.includes(commenterId)) {
       validateNumberIndices(resIdx, matchResultsArr, keywordLists, numberInclusionList);
-      if (multiSelect && matchRes.numMatchList.length > 0) {
+      if (multiSelect && matchResultsArr[resIdx].numMatchList.length > 0) {
         pollresults[resIdx].votes++;
-        pollresults[resIdx].comments.push(markKeyInString(commentContent, [matchResultsArr.numMatchList[0], digitCount(resIdx+1)]));
+        pollresults[resIdx].comments.push(commenterNick.concat(": " + markKeyInString(commentContent, [matchResultsArr[resIdx].numMatchList[0], digitCount(resIdx+1)])));
         pollresults[resIdx].commenters.push(commenterId);
       }
       else {
         validateKeywordIndices(resIdx, matchResultsArr, keywordLists, keywordInclusionList);
         
-        if (multiSelect && (validKeyMatchIdx = matchResultsArr.keyMatchList.findIndex(function(matchList) {return matchList.length > 0;})) >= 0) {
+        if (multiSelect && (validKeyMatchIdx = matchResultsArr[resIdx].keyMatchList.findIndex(function(matchList) {return matchList.length > 0;})) >= 0) {
           pollresults[resIdx].votes++;
-          pollresults[resIdx].comments.push(markKeyInString(commentContent, [matchResultsArr.keyMatchList[validKeyMatchIdx][0], keywordLists[resIdx][validKeyMatchIdx].length]));
+          pollresults[resIdx].comments.push(commenterNick.concat(": " + markKeyInString(commentContent, [matchResultsArr[resIdx].keyMatchList[validKeyMatchIdx][0], keywordLists[resIdx][validKeyMatchIdx].length])));
           pollresults[resIdx].commenters.push(commenterId);
         }
       }
@@ -65,10 +66,10 @@ function processComment(pollresults, keywordLists, numberInclusionList, keywordI
     var maxResultIdx = getMaxResultIdx(matchResults);
     if (maxResultIdx[0] >= 0) {
       if (maxResultIdx.length > 1) {
-        pollresults[maxResultIdx[0]].comments.push(markKeyInString(commentContent, [matchResults[maxResultIdx[0]].keyMatchList[maxResultIdx[1]].last(), keywordLists[maxResultIdx[0]][maxResultIdx[1]].length]));
+        pollresults[maxResultIdx[0]].comments.push(commenterNick.concat(": " + markKeyInString(commentContent, [matchResults[maxResultIdx[0]].keyMatchList[maxResultIdx[1]].last(), keywordLists[maxResultIdx[0]][maxResultIdx[1]].length])));
       }
       else {
-        pollresults[maxResultIdx[0]].comments.push(markKeyInString(commentContent, [matchResults[maxResultIdx[0]].numMatchList.last(), digitCount(maxResultIdx[0]+1)]));
+        pollresults[maxResultIdx[0]].comments.push(commenterNick.concat(": " + markKeyInString(commentContent, [matchResults[maxResultIdx[0]].numMatchList.last(), digitCount(maxResultIdx[0]+1)])));
       }
       pollresults[maxResultIdx[0]].votes++;
       pollresults[maxResultIdx[0]].commenters.push(commenterId);
