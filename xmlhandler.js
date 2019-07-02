@@ -6,27 +6,31 @@ var commentList = null;
 function process(callback) {
   showError("");
 
-  const lofterFile = document.getElementById("file").files[0];
+  try {
+    const lofterFile = document.getElementById("file").files[0];
 
-  if (hasReadFile(lofterFile))
-  {
-    if (processXml()) {
-      callback();
+    if (hasReadFile(lofterFile))
+    {
+      if (processXml()) {
+        callback();
+      }
+      return;
     }
-    return;
+
+    xmlFile = lofterFile;
+    const fileReader = new FileReader();
+    fileReader.onload = function(ev) {
+      xmlDoc = (new DOMParser()).parseFromString(ev.target.result, xmlFile.type);
+
+      if (isXmlValid() && processXml()) {
+        callback();
+      }
+    };
+
+    fileReader.readAsText(xmlFile);
+  } catch (err) {
+    showError(err);
   }
-
-  xmlFile = lofterFile;
-  const fileReader = new FileReader();
-  fileReader.onload = function(ev) {
-    xmlDoc = (new DOMParser()).parseFromString(ev.target.result, xmlFile.type);
-
-    if (isXmlValid() && processXml()) {
-      callback();
-    }
-  };
-
-  fileReader.readAsText(xmlFile);
 }
 
 function getPostItemIndex() {
@@ -78,16 +82,20 @@ function draw()
 {
   showError("");
 
-  if (commenterList != null) {
-    if (commenterList.length > 0 && document.getElementsByName("drawindex").length < commenterList.length) {
-      drawFromComment();
+  try {
+    if (commenterList != null) {
+      if (commenterList.length > 0 && document.getElementsByName("drawindex").length < commenterList.length) {
+        drawFromComment();
+      }
+      else {
+        showError("无更多可抽取评论用户。");
+      }
     }
     else {
-      showError("无更多可抽取评论用户。");
+      process(drawFromComment);
     }
-  }
-  else {
-    process(drawFromComment);
+  } catch (err) {
+    showError(err);
   }
 }
 
