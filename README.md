@@ -2,11 +2,14 @@
 利用Lofter自带的主页导出功能制作的自动评论抽奖与计票辅助网页工具。理论上支持任何平台5年内更新过版本的浏览器。
 
 ## 使用入口：
-在线地址：[简易Lofter评论抽奖计票工具](https://ezin666.github.io/lofter-tools/)
+##### 在线地址：[简易Lofter评论抽奖计票工具](https://ezin666.github.io/lofter-tools/)
 
-下载地址：
-## 工具所需材料：
-1. 一份从Lofter下载的主页导出文件（如何导出我的主页↓）
+##### 下载地址：
+GitHub：https://github.com/ezin666/lofter-tools/archive/v0.1.zip
+
+度盘： https://pan.baidu.com/s/1ZeJI6Yjsv5zV5Y3Z1mrDzw 提取码: mzss 
+## 所需材料：
+1. 一份从Lofter下载的主页导出文件（如何导出主页↓）
 
 ![导出我的主页](img/rm-export1.jpg)
 2. 需要进行抽奖或计票的文章链接（PC端或浏览器直接复制地址栏的网页地址，App的话参照下图↓）
@@ -14,7 +17,7 @@
 ![App复制文章链接1](img/rm-postlink1.jpg) ![App复制文章链接2](img/rm-postlink2.jpg)
 
 ## 使用步骤：
-1. 打开工具地址（[在线地址](https://ezin666.github.io/lofter-tools/)）或者双击打开index.html文件（下载地址）
+1. 打开工具地址（[在线地址](https://ezin666.github.io/lofter-tools/)）或者双击打开index.html文件（[下载地址](https://github.com/ezin666/lofter-tools/archive/v0.1.zip)）
 2. 选择下载好的Lofter XML导出文件
 3. 输入Lofter文章网页地址
 4. 选择`抽奖`或`计票`标签页
